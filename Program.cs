@@ -71,4 +71,11 @@ app.MapDelete("/api/tasks/{id}", async (int id, TaskDbContext db) =>
     return Results.NoContent();
 });
 
-app.Run("http://localhost:5000");
+// Auto-run migrations on startup
+using (var scope = app.Services.CreateScope())
+{
+    var context = scope.ServiceProvider.GetRequiredService<TaskDbContext>();
+    context.Database.Migrate();
+}
+
+app.Run(); // locally "http://localhost:5000"
