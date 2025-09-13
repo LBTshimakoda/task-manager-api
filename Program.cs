@@ -1,19 +1,33 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.SqlServer; // Add this using directive
 using TaskManagerApi.Data;
 using TaskManagerApi.Models;
+using static Microsoft.EntityFrameworkCore.DbLoggerCategory.Database;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Add Entity Framework
-builder.Services.AddDbContext<TaskDbContext>(options =>
-    options.UseSqlite("Data Source=tasks.db"));
+// Get connection string from environment or configuration
+var connectionString = builder.Configuration.GetConnectionString("DefaultConnection") 
+    ?? "Data Source=tasks.db"; // Fallback to SQLite for local development
 
-// Add CORS for Angular
+// Choose database provider based on connection string
+if (connectionString.Contains("Data Source"))
+{
+    builder.Services.AddDbContext<TaskDbContext>(options =>
+        options.UseSqlite(connectionString));
+}
+else
+{
+    builder.Services.AddDbContext<TaskDbContext>(options =>
+        options.UseSqlServer(connectionString));
+}
+
+// Add CORS with your deployed Angular app URL
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowAngular", policy =>
     {
-        policy.WithOrigins("http://localhost:4200")
+        policy.WithOrigins("http://localhost:4200", "https://happy-field-0f3f8b210.2.azurestaticapps.net")
               .AllowAnyHeader()
               .AllowAnyMethod();
     });
